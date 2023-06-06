@@ -19,7 +19,13 @@ using boost::asio::ip::tcp;
 
 enum { max_length = 1024 };
 
-void send_requests(tcp::resolver::results_type ip, size_t count) {
+
+void send_requests(tcp::resolver::results_type ip, size_t count, size_t id) {
+    {
+        std::ostringstream ss;
+        ss << "thread " << id << ": started\n";
+        std::cout << ss.str();
+    }
     try {
         boost::asio::io_context io_context;
         tcp::socket s(io_context);
@@ -30,13 +36,20 @@ void send_requests(tcp::resolver::results_type ip, size_t count) {
             size_t request_length = std::strlen(request);
             boost::asio::write(s, boost::asio::buffer(request, request_length));
             size_t response_length = boost::asio::read(s, boost::asio::buffer(response, request_length));
-            std::cout << "Reply is: ";
-            std::cout.write(response, response_length);
-            std::cout << "\n";
+            std::ostringstream ss;
+            ss << "thread " << id << ": request = " << request << " response = ";
+            ss.write(response, response_length);
+            ss << "\n";
+            std::cout << ss.str();
         }
     }
     catch (std::exception& e) {
-        std::cout << e.what() << "\n";
+        std::cout << "thread " << id << ": " << e.what() << "\n";
+    }
+    {
+        std::ostringstream ss;
+        ss << "thread " << id << ": ended\n";
+        std::cout << ss.str();
     }
 }
 
@@ -48,13 +61,13 @@ int main(int argc, char* argv[])
     size_t read_write_count = 10;
     boost::asio::io_context io_context;
     tcp::resolver resolver(io_context);
-    std::list<std::shared_ptr<std::thread>> threads(thread_count);
+    std::list<std::thread> threads(thread_count);
     auto ip = resolver.resolve(argv[1], argv[2]);
-    for (size_t i = 0; i < thread_count; i++) {
-        threads.push_back(std::make_shared<std::thread>(send_requests, ip, read_write_count));
+    for (size_t i = 1; i < thread_count + 1; i++) {
+        threads.push_back(std::thread(send_requests, ip, read_write_count, i));
     }
     for (auto& t : threads) {
-        t->join();
+        t.join();
     }
 
     return 0;
