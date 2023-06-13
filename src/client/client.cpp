@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
         std::list<std::thread> threads(thread_count);
         auto address = resolver.resolve(ip, std::to_string(port));
         for (size_t i = 1; i < thread_count + 1; i++) {
-            threads.push_back(std::thread(send_requests, ip, write_read, i));
+            threads.push_back(std::thread(send_requests, address, write_read, i));
         }
         for (auto& t : threads) {
             t.join();
