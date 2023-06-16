@@ -13,7 +13,7 @@ public:
         : socket_(std::move(socket))
     {
         this->client_id = client_id;
-        std::cout << "start " << client_id << "\n";
+        std::cout << "connection established: " << client_id << "\n";
     }
 
     void start()
@@ -22,7 +22,7 @@ public:
     }
 
     ~session() {
-        std::cout << "stop " << client_id << "\n";
+        std::cout << "connection lost: " << client_id << "\n";
     }
 
 private:
@@ -43,7 +43,7 @@ private:
     {
         auto self(shared_from_this());
         boost::asio::async_write(socket_, boost::asio::buffer(data_, length),
-            [this, self](boost::system::error_code ec, std::size_t /*length*/)
+            [this, self](boost::system::error_code ec, std::size_t)
             {
                 if (!ec)
                 {
@@ -53,7 +53,7 @@ private:
     }
     
     tcp::socket socket_;
-    enum { max_length = 1024 };
+    enum { max_length = 6 };
     char data_[max_length];
     size_t client_id;
 };
