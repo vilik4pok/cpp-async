@@ -10,7 +10,7 @@ enum { max_length = 6 };
 bool process_command_line(int argc, char** argv, std::string& ip, size_t& port, size_t& threads, size_t& write_read) {
     try
     {
-        boost::program_options::options_description desc("Usage:\n  parallel_executor (-h | --help)\n  parallel_executor <ip> <port> <threads> <write_read>\nOptions:");
+        boost::program_options::options_description desc("Usage:\n  client (-h | --help)\n  client <ip> <port> <threads> <write_read>\nOptions:");
         desc.add_options()
             ("help,h", "Help screen")
             ("ip,i", boost::program_options::value<std::string>(&ip)->required(), "Server ip")
