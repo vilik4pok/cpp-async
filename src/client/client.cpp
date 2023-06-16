@@ -5,7 +5,7 @@
 #include <boost/program_options.hpp>
 #include <thread>
 
-enum { max_length = 1024 };
+enum { max_length = 6 };
 
 bool process_command_line(int argc, char** argv, std::string& ip, size_t& port, size_t& threads, size_t& write_read) {
     try
@@ -42,12 +42,12 @@ bool process_command_line(int argc, char** argv, std::string& ip, size_t& port, 
 }
 
 void send_requests(boost::asio::ip::tcp::resolver::results_type ip, size_t count, size_t id) {
-    {
-        std::ostringstream ss;
-        ss << "thread " << id << ": started\n";
-        std::cout << ss.str();
-    }
     try {
+        {
+            std::ostringstream ss;
+            ss << "thread " << id << ": started\n";
+            std::cout << ss.str();
+        }
         boost::asio::io_context io_context;
         boost::asio::ip::tcp::socket s(io_context);
         boost::asio::connect(s, ip);
@@ -63,32 +63,38 @@ void send_requests(boost::asio::ip::tcp::resolver::results_type ip, size_t count
             ss << "\n";
             std::cout << ss.str();
         }
+        {
+            std::ostringstream ss;
+            ss << "thread " << id << ": ended\n";
+            std::cout << ss.str();
+        }
     }
     catch (std::exception& e) {
         std::cout << "thread " << id << ": " << e.what() << "\n";
-    }
-    {
-        std::ostringstream ss;
-        ss << "thread " << id << ": ended\n";
-        std::cout << ss.str();
     }
 }
 
 int main(int argc, char* argv[])
 {
-    std::string ip;
-    size_t port, thread_count, write_read;
-    if (process_command_line(argc, argv, ip, port, thread_count, write_read)) {
-        boost::asio::io_context io_context;
-        boost::asio::ip::tcp::resolver resolver(io_context);
-        std::list<std::thread> threads(thread_count);
-        auto address = resolver.resolve(ip, std::to_string(port));
-        for (size_t i = 1; i < thread_count + 1; i++) {
-            threads.push_back(std::thread(send_requests, address, write_read, i));
+    try {
+        std::string ip;
+        size_t port, thread_count, write_read;
+        if (process_command_line(argc, argv, ip, port, thread_count, write_read)) {
+            boost::asio::io_context io_context;
+            boost::asio::ip::tcp::resolver resolver(io_context);
+            std::list<std::thread> threads;
+            auto address = resolver.resolve(ip, std::to_string(port));
+            for (size_t i = 1; i < thread_count + 1; i++) {
+                threads.push_back(std::thread(send_requests, address, write_read, i));
+            }
+            for (auto& t : threads) {
+                t.join();
+            }
         }
-        for (auto& t : threads) {
-            t.join();
-        }
-    };
+    }
+    catch (std::exception& e) {
+        std::cerr << "Exception: " << e.what() << "\n";
+    }
+    
     return 0;
 }
